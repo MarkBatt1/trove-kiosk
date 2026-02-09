@@ -3,121 +3,243 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Print Station - TroveEmporium</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <title>Print Station</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f3f4f6; min-height: 100vh; }
-    
-    /* Store Selection */
-    .store-select { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #f3f4f6; min-height: 100vh; }
+    .store-select { display: block; text-align: center; padding: 80px 24px; }
     .store-select h1 { font-size: 28px; color: #111; margin-bottom: 8px; }
     .store-select p { color: #6b7280; margin-bottom: 32px; }
-    .store-select .icon { font-size: 60px; margin-bottom: 16px; }
-    .store-btn { display: block; width: 100%; max-width: 320px; padding: 24px; margin: 8px 0; border: none; border-radius: 16px; font-size: 20px; font-weight: 700; color: #fff; cursor: pointer; }
-    .store-btn.bmth { background: #2563eb; }
-    .store-btn.wint { background: #7c3aed; }
-    
-    /* Header */
-    .header { padding: 12px 16px; color: #fff; display: flex; align-items: center; justify-content: space-between; }
-    .header.bmth { background: #2563eb; }
-    .header.wint { background: #7c3aed; }
-    .header h1 { font-size: 20px; }
-    .header .store-name { font-size: 14px; opacity: 0.8; }
-    .header .badge { background: #ef4444; color: #fff; padding: 2px 10px; border-radius: 99px; font-size: 14px; font-weight: 700; margin-left: 8px; }
-    .refresh-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 12px; border-radius: 12px; font-size: 16px; cursor: pointer; }
-    
-    /* Tabs */
-    .tabs { background: #fff; padding: 8px 16px; display: flex; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; background: #f3f4f6; color: #6b7280; }
-    .tab-btn.active-pending { background: #dbeafe; color: #1e40af; }
-    .tab-btn.active-done { background: #dcfce7; color: #166534; }
-    
-    /* Job Cards */
+    .store-btn { display: block; width: 280px; padding: 24px; margin: 8px auto; border: none; border-radius: 16px; font-size: 20px; font-weight: 700; color: #fff; cursor: pointer; }
+    .store-btn-bmth { background: #2563eb; }
+    .store-btn-wint { background: #7c3aed; }
+    .header { padding: 12px 16px; color: #fff; overflow: hidden; }
+    .header-bmth { background: #2563eb; }
+    .header-wint { background: #7c3aed; }
+    .header h1 { font-size: 20px; float: left; }
+    .header .refresh-btn { float: right; background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 12px; border-radius: 12px; font-size: 16px; cursor: pointer; }
+    .header .store-name { clear: both; font-size: 14px; opacity: 0.8; }
+    .badge { background: #ef4444; color: #fff; padding: 2px 10px; border-radius: 99px; font-size: 14px; font-weight: 700; margin-left: 8px; }
+    .tabs { background: #fff; padding: 8px 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .tab-btn { width: 48%; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; background: #f3f4f6; color: #6b7280; cursor: pointer; }
+    .tab-btn-active-pending { background: #dbeafe; color: #1e40af; }
+    .tab-btn-active-done { background: #dcfce7; color: #166534; }
     .jobs { padding: 16px; }
-    .job-card { background: #fff; border-radius: 16px; margin-bottom: 12px; overflow: hidden; border: 2px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .job-card.pending { border-color: #fcd34d; }
-    .job-card.printing { border-color: #93c5fd; }
-    .job-card.failed { border-color: #fca5a5; }
-    
-    .job-header { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
-    .job-trader { display: flex; align-items: center; gap: 8px; }
+    .job-card { background: #fff; border-radius: 16px; margin-bottom: 12px; overflow: hidden; border: 2px solid #e5e7eb; }
+    .job-card-pending { border-color: #fcd34d; }
+    .job-card-printing { border-color: #93c5fd; }
+    .job-card-failed { border-color: #fca5a5; }
+    .job-header { padding: 12px 16px; overflow: hidden; }
+    .job-trader { float: left; }
     .job-code { font-family: monospace; font-size: 18px; font-weight: 700; color: #111; }
     .job-name { font-weight: 700; color: #111; }
     .job-time { font-size: 13px; color: #6b7280; margin-top: 2px; }
-    .job-count { text-align: right; }
-    .job-count .num { font-size: 28px; font-weight: 700; color: #111; }
-    .job-count .lbl { font-size: 12px; color: #6b7280; }
-    
+    .job-count { float: right; text-align: right; }
+    .job-count-num { font-size: 28px; font-weight: 700; color: #111; }
+    .job-count-lbl { font-size: 12px; color: #6b7280; }
     .job-labels { margin: 0 16px 8px; background: #f9fafb; border-radius: 12px; padding: 12px; max-height: 120px; overflow-y: auto; }
-    .job-label-row { display: flex; justify-content: space-between; font-size: 14px; padding: 2px 0; }
-    .job-label-name { color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; margin-right: 8px; }
-    .job-label-detail { color: #111; font-weight: 500; white-space: nowrap; }
-    
+    .job-label-row { overflow: hidden; font-size: 14px; padding: 2px 0; }
+    .job-label-name { float: left; color: #374151; max-width: 70%; overflow: hidden; white-space: nowrap; }
+    .job-label-detail { float: right; color: #111; font-weight: 500; }
     .job-notes { padding: 0 16px 8px; font-size: 14px; color: #6b7280; font-style: italic; }
-    
-    .job-actions { padding: 8px 16px 16px; display: flex; gap: 8px; }
-    .print-btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; color: #fff; cursor: pointer; }
-    .print-btn.bmth { background: #2563eb; }
-    .print-btn.wint { background: #7c3aed; }
-    .print-btn:disabled { opacity: 0.5; }
-    .cancel-btn { padding: 16px 20px; border: 2px solid #e5e7eb; border-radius: 12px; background: #fff; color: #6b7280; font-weight: 500; cursor: pointer; font-size: 16px; }
-    .reprint-btn { flex: 1; padding: 12px; border: 2px solid #e5e7eb; border-radius: 12px; background: #fff; color: #374151; font-weight: 500; cursor: pointer; font-size: 16px; }
-    .retry-btn { flex: 1; padding: 16px; border: none; border-radius: 12px; background: #eab308; color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; }
-    .printing-indicator { flex: 1; padding: 16px; background: #dbeafe; color: #1e40af; border-radius: 12px; font-size: 18px; font-weight: 700; text-align: center; border: none; }
-    
-    /* Empty State */
+    .job-actions { padding: 8px 16px 16px; overflow: hidden; }
+    .print-btn { width: 78%; padding: 16px; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; color: #fff; float: left; cursor: pointer; }
+    .print-btn-bmth { background: #2563eb; }
+    .print-btn-wint { background: #7c3aed; }
+    .cancel-btn { width: 18%; margin-left: 2%; padding: 16px; border: 2px solid #e5e7eb; border-radius: 12px; background: #fff; color: #6b7280; font-weight: 500; font-size: 16px; float: left; text-align: center; cursor: pointer; }
+    .reprint-btn { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 12px; background: #fff; color: #374151; font-weight: 500; font-size: 16px; text-align: center; cursor: pointer; }
+    .retry-btn { width: 78%; padding: 16px; border: none; border-radius: 12px; background: #eab308; color: #fff; font-size: 18px; font-weight: 700; float: left; cursor: pointer; }
+    .printing-indicator { width: 100%; padding: 16px; background: #dbeafe; color: #1e40af; border-radius: 12px; font-size: 18px; font-weight: 700; text-align: center; }
     .empty { text-align: center; padding: 64px 24px; }
-    .empty .icon { font-size: 60px; margin-bottom: 16px; }
     .empty h3 { font-size: 18px; color: #111; margin-bottom: 8px; }
     .empty p { font-size: 14px; color: #6b7280; }
-    
-    /* Footer */
-    .footer { background: #fff; border-top: 1px solid #e5e7eb; padding: 8px 16px; display: flex; justify-content: space-between; font-size: 13px; color: #6b7280; }
-    
-    /* Loading */
+    .footer { background: #fff; border-top: 1px solid #e5e7eb; padding: 8px 16px; overflow: hidden; font-size: 13px; color: #6b7280; }
+    .footer-left { float: left; }
+    .footer-right { float: right; }
     .loading { text-align: center; padding: 64px 24px; color: #6b7280; }
-    .spinner { display: inline-block; width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    .spinner { display: inline-block; width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; -webkit-animation: spin 0.8s linear infinite; animation: spin 0.8s linear infinite; }
+    @-webkit-keyframes spin { to { -webkit-transform: rotate(360deg); } }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .pulse { animation: pulse 2s ease-in-out infinite; }
+    .error-box { background: #fef2f2; border: 2px solid #ef4444; border-radius: 12px; padding: 16px; margin: 16px; color: #991b1b; font-size: 14px; word-break: break-all; }
+    .debug-box { background: #fffbeb; border: 2px solid #f59e0b; border-radius: 8px; padding: 8px 12px; margin: 4px 16px; color: #92400e; font-size: 11px; word-break: break-all; }
+    .clr { clear: both; }
   </style>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="debug"></div>
+  <div id="app">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p style="margin-top:12px;color:#111;font-size:16px;">Starting Print Station...</p>
+    </div>
+  </div>
+  <div id="errors"></div>
 
   <script>
-    // ─── Config ───────────────────────────────────────────────────────
+    function dbg(msg) {
+      var el = document.getElementById('debug');
+      if (el) {
+        el.innerHTML = el.innerHTML + '<div class="debug-box">' + msg + '</div>';
+      }
+    }
+
+    window.onerror = function(msg, url, line) {
+      var el = document.getElementById('errors');
+      if (el) {
+        el.innerHTML = el.innerHTML + '<div class="error-box">ERROR: ' + msg + ' (line ' + line + ')</div>';
+      }
+      return false;
+    };
+
+    dbg('JS running. UA: ' + navigator.userAgent);
+
     var SUPABASE_URL = 'https://uznpvozqrxzbxilibcza.supabase.co';
     var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6bnB2b3pxcnh6YnhpbGliY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTI4MTUsImV4cCI6MjA4NDY4ODgxNX0.xvWKF8xTaemDRLCizQArI9mf3iXrMSmb6cPZfReGvHk';
-    
-    // Try to read from meta or hardcode - we need the anon key
-    // The app will prompt if not set
-    
+    var REST_URL = SUPABASE_URL + '/rest/v1';
+
     var app = document.getElementById('app');
     var store = '';
     var tab = 'pending';
     var jobs = [];
     var loading = true;
     var printingId = null;
-    var supabaseClient = null;
-    var channel = null;
     var prevPendingCount = 0;
+    var pollTimer = null;
+    var lastPoll = '';
 
-    // Get store from URL
-    var urlParams = new URLSearchParams(window.location.search);
-    var storeParam = urlParams.get('store') || '';
+    var storeParam = '';
+    try {
+      var search = window.location.search || '';
+      dbg('URL search: ' + search);
+      if (search.length > 1) {
+        var pairs = search.substring(1).split('&');
+        for (var pi = 0; pi < pairs.length; pi++) {
+          var kv = pairs[pi].split('=');
+          if (kv[0] === 'store' && kv[1]) {
+            storeParam = decodeURIComponent(kv[1]);
+          }
+        }
+      }
+      dbg('Store: "' + storeParam + '"');
+    } catch (e) {
+      dbg('Parse error: ' + e.message);
+    }
+
+    function xhrGet(url, callback) {
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_ANON_KEY);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState === 4) {
+            dbg('Response: ' + xhr.status);
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                var data = JSON.parse(xhr.responseText);
+                callback(null, data);
+              } catch (e) {
+                callback('JSON error: ' + e.message, []);
+              }
+            } else {
+              callback('HTTP ' + xhr.status, []);
+            }
+          }
+        };
+        xhr.onerror = function() {
+          dbg('Network error on XHR');
+          callback('Network error - blocked?', []);
+        };
+        xhr.send();
+      } catch (e) {
+        dbg('XHR fail: ' + e.message);
+        callback('XHR fail: ' + e.message, []);
+      }
+    }
+
+    function xhrPatch(url, body, callback) {
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('PATCH', url, true);
+        xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_ANON_KEY);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('Prefer', 'return=representation');
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState === 4) {
+            if (callback) callback();
+          }
+        };
+        xhr.onerror = function() {
+          if (callback) callback();
+        };
+        xhr.send(JSON.stringify(body));
+      } catch (e) {
+        if (callback) callback();
+      }
+    }
 
     function init() {
-      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+      dbg('Init. store=' + storeParam);
       if (storeParam) {
         store = storeParam;
         loadJobs();
-        setupRealtime();
+        startPolling();
       }
       render();
+      dbg('Rendered OK');
+    }
+
+    function startPolling() {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(function() {
+        loadJobs();
+      }, 5000);
+    }
+
+    function loadJobs() {
+      var statusFilter = (tab === 'pending') ? 'status=in.(pending,printing,failed)' : 'status=in.(completed,cancelled)';
+      var orderDir = (tab === 'pending') ? 'asc' : 'desc';
+      var url = REST_URL + '/print_jobs?store=eq.' + store + '&' + statusFilter + '&order=created_at.' + orderDir + '&limit=50';
+
+      xhrGet(url, function(err, data) {
+        if (err) {
+          showError('Load error: ' + err);
+          loading = false;
+          render();
+        } else {
+          if (tab === 'pending') {
+            var newPendingCount = 0;
+            for (var i = 0; i < data.length; i++) {
+              if (data[i].status === 'pending') newPendingCount++;
+            }
+            if (newPendingCount > prevPendingCount && prevPendingCount >= 0) {
+              playChime();
+            }
+            prevPendingCount = newPendingCount;
+          }
+          jobs = data;
+          dbg('Jobs: ' + data.length);
+          loading = false;
+          var now = new Date();
+          lastPoll = ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2) + ':' + ('0' + now.getSeconds()).slice(-2);
+          render();
+        }
+      });
+    }
+
+    function showError(msg) {
+      var el = document.getElementById('errors');
+      if (el) {
+        el.innerHTML = '<div class="error-box">' + msg + '</div>';
+      }
+    }
+
+    function refreshJobs() {
+      loading = true;
+      render();
+      loadJobs();
     }
 
     function render() {
@@ -130,11 +252,10 @@
 
     function renderStoreSelect() {
       app.innerHTML = '<div class="store-select">' +
-        '<div class="icon">🖨️</div>' +
         '<h1>Print Station</h1>' +
         '<p>Select your store</p>' +
-        '<button class="store-btn bmth" onclick="selectStore(\'bournemouth\')">🏪 Bournemouth</button>' +
-        '<button class="store-btn wint" onclick="selectStore(\'winton\')">🏪 Winton</button>' +
+        '<button class="store-btn store-btn-bmth" onclick="selectStore(\'bournemouth\')">Bournemouth</button>' +
+        '<button class="store-btn store-btn-wint" onclick="selectStore(\'winton\')">Winton</button>' +
         '</div>';
     }
 
@@ -143,7 +264,7 @@
       loading = true;
       render();
       loadJobs();
-      setupRealtime();
+      startPolling();
     }
 
     function renderQueue() {
@@ -152,189 +273,136 @@
         if (jobs[i].status === 'pending') pendingCount++;
       }
 
-      var isBmth = store === 'bournemouth';
+      var isBmth = (store === 'bournemouth');
       var storeName = store.charAt(0).toUpperCase() + store.slice(1);
       var storeClass = isBmth ? 'bmth' : 'wint';
 
       var html = '';
 
-      // Header
-      html += '<div class="header ' + storeClass + '">';
-      html += '<div>';
-      html += '<h1>🖨️ Print Station';
+      html += '<div class="header header-' + storeClass + '">';
+      html += '<h1>Print Station';
       if (tab === 'pending' && pendingCount > 0) {
-        html += ' <span class="badge pulse">' + pendingCount + '</span>';
+        html += ' <span class="badge">' + pendingCount + '</span>';
       }
       html += '</h1>';
+      html += '<button class="refresh-btn" onclick="refreshJobs()">Refresh</button>';
+      html += '<div class="clr"></div>';
       html += '<div class="store-name">' + storeName + '</div>';
       html += '</div>';
-      html += '<button class="refresh-btn" onclick="refreshJobs()">🔄</button>';
-      html += '</div>';
 
-      // Tabs
       html += '<div class="tabs">';
-      html += '<button class="tab-btn ' + (tab === 'pending' ? 'active-pending' : '') + '" onclick="switchTab(\'pending\')">';
-      html += '⏳ Waiting to Print';
-      if (pendingCount > 0) html += ' <span style="background:#ef4444;color:#fff;padding:1px 8px;border-radius:99px;font-size:12px;margin-left:4px;">' + pendingCount + '</span>';
-      html += '</button>';
-      html += '<button class="tab-btn ' + (tab === 'completed' ? 'active-done' : '') + '" onclick="switchTab(\'completed\')">✅ Done</button>';
+      html += '<button class="tab-btn ' + (tab === 'pending' ? 'tab-btn-active-pending' : '') + '" onclick="switchTab(\'pending\')">';
+      html += 'Waiting';
+      if (pendingCount > 0) html += ' (' + pendingCount + ')';
+      html += '</button> ';
+      html += '<button class="tab-btn ' + (tab === 'completed' ? 'tab-btn-active-done' : '') + '" onclick="switchTab(\'completed\')">Done</button>';
       html += '</div>';
 
-      // Jobs
       html += '<div class="jobs">';
 
       if (loading) {
-        html += '<div class="loading"><div class="spinner"></div><p style="margin-top:12px;">Loading print queue...</p></div>';
+        html += '<div class="loading"><div class="spinner"></div><p style="margin-top:12px;">Loading...</p></div>';
       } else if (jobs.length === 0) {
         html += '<div class="empty">';
-        html += '<div class="icon">' + (tab === 'pending' ? '📭' : '📋') + '</div>';
         html += '<h3>' + (tab === 'pending' ? 'No labels waiting' : 'No completed jobs') + '</h3>';
-        html += '<p>' + (tab === 'pending' ? "When traders send labels to print, they'll appear here automatically" : 'Completed print jobs will show here') + '</p>';
+        html += '<p>' + (tab === 'pending' ? 'When traders send labels from the portal they appear here' : 'Completed print jobs show here') + '</p>';
         html += '</div>';
       } else {
-        for (var j = 0; j < jobs.length; j++) {
-          html += renderJobCard(jobs[j]);
+        for (var i = 0; i < jobs.length; i++) {
+          html += renderJobCard(jobs[i]);
         }
       }
 
       html += '</div>';
 
-      // Footer
       html += '<div class="footer">';
-      html += '<span>🟢 Live — auto-refreshes</span>';
-      html += '<span>' + storeName + ' Print Station</span>';
+      html += '<span class="footer-left">Polling every 5s</span>';
+      html += '<span class="footer-right">Last: ' + (lastPoll || '--') + '</span>';
+      html += '<div class="clr"></div>';
       html += '</div>';
 
       app.innerHTML = html;
-
-      // Play sound if new pending jobs
-      if (tab === 'pending' && pendingCount > prevPendingCount && prevPendingCount >= 0) {
-        playChime();
-      }
-      prevPendingCount = pendingCount;
     }
 
     function renderJobCard(job) {
-      var traderName = (job.traders && job.traders.business_name) ? job.traders.business_name : 'Unknown';
-      var traderCode = (job.traders && job.traders.barcode_prefix) ? job.traders.barcode_prefix : '???';
-      var storeClass = store === 'bournemouth' ? 'bmth' : 'wint';
-      var statusClass = job.status === 'pending' ? 'pending' : (job.status === 'printing' ? 'printing' : (job.status === 'failed' ? 'failed' : ''));
-      var labels = job.labels || [];
+      var labels = [];
+      try {
+        if (typeof job.labels === 'string') {
+          labels = JSON.parse(job.labels);
+        } else if (job.labels && typeof job.labels === 'object') {
+          if (job.labels.length !== undefined) {
+            labels = job.labels;
+          }
+        }
+      } catch (e) {
+        labels = [];
+      }
 
-      var html = '<div class="job-card ' + statusClass + '">';
-
-      // Header
-      html += '<div class="job-header">';
-      html += '<div>';
-      html += '<div class="job-trader"><span class="job-code">' + traderCode + '</span><span class="job-name">' + traderName + '</span></div>';
-      html += '<div class="job-time">' + timeAgo(job.created_at);
-      if (job.created_by_name) html += ' · ' + job.created_by_name;
-      html += '</div>';
-      html += '</div>';
-      html += '<div class="job-count"><div class="num">' + (job.total_labels || 0) + '</div><div class="lbl">label' + (job.total_labels !== 1 ? 's' : '') + '</div></div>';
-      html += '</div>';
-
-      // Labels
-      html += '<div class="job-labels">';
+      var totalLabels = 0;
       for (var i = 0; i < labels.length; i++) {
-        var label = labels[i];
-        var name = label.product_name || 'Item';
-        var price = parseFloat(label.price).toFixed(2);
-        html += '<div class="job-label-row"><span class="job-label-name">' + name + '</span><span class="job-label-detail">£' + price + ' × ' + (label.quantity || 1) + '</span></div>';
+        totalLabels = totalLabels + (labels[i].quantity || 1);
       }
+
+      var isBmth = (store === 'bournemouth');
+      var storeClass = isBmth ? 'bmth' : 'wint';
+      var statusClass = job.status || 'pending';
+
+      var html = '<div class="job-card job-card-' + statusClass + '">';
+
+      html += '<div class="job-header">';
+      html += '<div class="job-trader">';
+      html += '<div class="job-code">' + (job.trader_code || '???') + '</div>';
+      html += '<div class="job-name">' + (job.trader_name || 'Unknown Trader') + '</div>';
+      html += '<div class="job-time">' + timeAgo(job.created_at) + '</div>';
+      html += '</div>';
+      html += '<div class="job-count">';
+      html += '<div class="job-count-num">' + totalLabels + '</div>';
+      html += '<div class="job-count-lbl">label' + (totalLabels !== 1 ? 's' : '') + '</div>';
+      html += '</div>';
+      html += '<div class="clr"></div>';
       html += '</div>';
 
-      // Notes
-      if (job.notes) {
-        html += '<div class="job-notes">📝 ' + job.notes + '</div>';
+      if (labels.length > 0) {
+        html += '<div class="job-labels">';
+        for (var j = 0; j < labels.length; j++) {
+          var label = labels[j];
+          html += '<div class="job-label-row">';
+          html += '<span class="job-label-name">' + (label.item_name || label.barcode_number || '-') + '</span>';
+          html += '<span class="job-label-detail">';
+          if (label.price) html += '&pound;' + parseFloat(label.price).toFixed(2);
+          if (label.quantity && label.quantity > 1) html += ' x' + label.quantity;
+          html += '</span>';
+          html += '<div class="clr"></div>';
+          html += '</div>';
+        }
+        html += '</div>';
       }
 
-      // Actions
+      if (job.notes) {
+        html += '<div class="job-notes">' + job.notes + '</div>';
+      }
+
       html += '<div class="job-actions">';
       if (job.status === 'pending') {
-        var disabled = printingId === job.id ? 'disabled' : '';
-        var btnText = printingId === job.id ? '⏳ Printing...' : '🖨️ Print Now';
-        html += '<button class="print-btn ' + storeClass + '" ' + disabled + ' onclick="printJob(\'' + job.id + '\');">' + btnText + '</button>';
-        html += '<button class="cancel-btn" onclick="cancelJob(\'' + job.id + '\');">✕</button>';
+        if (printingId === job.id) {
+          html += '<div class="printing-indicator">Printing...</div>';
+        } else {
+          html += '<button class="print-btn print-btn-' + storeClass + '" onclick="printJob(\'' + job.id + '\')">Print ' + totalLabels + ' Label' + (totalLabels !== 1 ? 's' : '') + '</button>';
+          html += '<button class="cancel-btn" onclick="cancelJob(\'' + job.id + '\')">X</button>';
+        }
       } else if (job.status === 'printing') {
-        html += '<div class="printing-indicator pulse">⏳ Printing...</div>';
+        html += '<div class="printing-indicator">Printing...</div>';
       } else if (job.status === 'failed') {
-        html += '<button class="retry-btn" onclick="retryJob(\'' + job.id + '\');">🔄 Retry</button>';
+        html += '<button class="retry-btn" onclick="retryJob(\'' + job.id + '\')">Retry</button>';
+        html += '<button class="cancel-btn" onclick="cancelJob(\'' + job.id + '\')">X</button>';
       } else if (job.status === 'completed') {
-        html += '<button class="reprint-btn" onclick="printJob(\'' + job.id + '\');">🖨️ Reprint</button>';
+        html += '<button class="reprint-btn" onclick="retryJob(\'' + job.id + '\')">Reprint</button>';
       }
+      html += '<div class="clr"></div>';
       html += '</div>';
 
       html += '</div>';
       return html;
-    }
-
-    // ─── Data ─────────────────────────────────────────────────────────
-    function loadJobs() {
-      if (!supabaseClient || !store) return;
-
-      var statuses = tab === 'pending' ? ['pending', 'printing'] : ['completed', 'failed', 'cancelled'];
-
-      supabaseClient
-        .from('print_jobs')
-        .select('*, traders:trader_id(business_name, barcode_prefix)')
-        .eq('store', store)
-        .in('status', statuses)
-        .order('created_at', { ascending: tab === 'pending' })
-        .limit(50)
-        .then(function(result) {
-          if (result.error) {
-            console.error('Load error:', result.error);
-          } else {
-            jobs = result.data || [];
-          }
-          loading = false;
-          render();
-        });
-    }
-
-    function refreshJobs() {
-      loading = true;
-      render();
-      loadJobs();
-    }
-
-    function setupRealtime() {
-      if (channel) {
-        supabaseClient.removeChannel(channel);
-      }
-
-      channel = supabaseClient
-        .channel('kiosk-queue-' + store)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'print_jobs',
-            filter: 'store=eq.' + store
-          },
-          function() { loadJobs(); }
-        )
-        .subscribe();
-    }
-
-    function updateJobStatus(jobId, newStatus, callback) {
-      var updates = { status: newStatus };
-      if (newStatus === 'completed') {
-        updates.printed_at = new Date().toISOString();
-        updates.printed_by = store.charAt(0).toUpperCase() + store.slice(1) + ' Clover';
-      }
-
-      supabaseClient
-        .from('print_jobs')
-        .update(updates)
-        .eq('id', jobId)
-        .then(function(result) {
-          if (result.error) console.error('Update error:', result.error);
-          if (callback) callback();
-          loadJobs();
-        });
     }
 
     function switchTab(t) {
@@ -345,13 +413,12 @@
       loadJobs();
     }
 
-    // ─── Actions ──────────────────────────────────────────────────────
     function cancelJob(jobId) {
-      updateJobStatus(jobId, 'cancelled');
+      xhrPatch(REST_URL + '/print_jobs?id=eq.' + jobId, { status: 'cancelled' }, function() { loadJobs(); });
     }
 
     function retryJob(jobId) {
-      updateJobStatus(jobId, 'pending');
+      xhrPatch(REST_URL + '/print_jobs?id=eq.' + jobId, { status: 'pending' }, function() { loadJobs(); });
     }
 
     function printJob(jobId) {
@@ -364,7 +431,7 @@
       printingId = jobId;
       render();
 
-      updateJobStatus(jobId, 'printing', function() {
+      xhrPatch(REST_URL + '/print_jobs?id=eq.' + jobId, { status: 'printing' }, function() {
         var printHTML = generatePrintHTML(job);
 
         var iframe = document.getElementById('print-frame');
@@ -380,25 +447,49 @@
           document.body.appendChild(iframe);
         }
 
-        iframe.contentDocument.open();
-        iframe.contentDocument.write(printHTML);
-        iframe.contentDocument.close();
+        try {
+          iframe.contentDocument.open();
+          iframe.contentDocument.write(printHTML);
+          iframe.contentDocument.close();
+        } catch (e) {
+          showError('Print frame error: ' + e.message);
+        }
 
         setTimeout(function() {
-          iframe.contentWindow.focus();
-          iframe.contentWindow.print();
+          try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+          } catch (e) {
+            showError('Print error: ' + e.message);
+          }
 
           setTimeout(function() {
-            updateJobStatus(jobId, 'completed');
-            printingId = null;
-            render();
+            var doneUpdates = {
+              status: 'completed',
+              printed_at: new Date().toISOString(),
+              printed_by: store.charAt(0).toUpperCase() + store.slice(1) + ' Clover'
+            };
+            xhrPatch(REST_URL + '/print_jobs?id=eq.' + jobId, doneUpdates, function() {
+              printingId = null;
+              loadJobs();
+            });
           }, 1000);
         }, 500);
       });
     }
 
     function generatePrintHTML(job) {
-      var labels = job.labels || [];
+      var labels = [];
+      try {
+        if (typeof job.labels === 'string') {
+          labels = JSON.parse(job.labels);
+        } else if (job.labels && typeof job.labels === 'object') {
+          if (job.labels.length !== undefined) labels = job.labels;
+        }
+      } catch (e) {
+        labels = [];
+      }
+
       var allLabels = [];
       for (var i = 0; i < labels.length; i++) {
         var qty = labels[i].quantity || 1;
@@ -414,7 +505,7 @@
       html += '@page { size: ' + labelSize + ' ' + labelSize + '; margin: 0; }';
       html += '* { margin: 0; padding: 0; box-sizing: border-box; }';
       html += 'body { font-family: Arial, sans-serif; }';
-      html += '.label { width: ' + labelSize + '; height: ' + labelSize + '; display: flex; flex-direction: column; align-items: center; justify-content: center; page-break-after: always; overflow: hidden; }';
+      html += '.label { width: ' + labelSize + '; height: ' + labelSize + '; text-align: center; padding-top: 2mm; page-break-after: always; overflow: hidden; }';
       html += '.label:last-child { page-break-after: auto; }';
       html += '.barcode-container { text-align: center; }';
       html += '.barcode-container svg { width: 20mm; height: 12mm; }';
@@ -425,7 +516,7 @@
 
       for (var j = 0; j < allLabels.length; j++) {
         html += '<div class="label"><div class="barcode-container"><svg id="bc-' + j + '"></svg></div>';
-        html += '<div class="price">£' + parseFloat(allLabels[j].price).toFixed(2) + '</div></div>';
+        html += '<div class="price">&pound;' + parseFloat(allLabels[j].price).toFixed(2) + '</div></div>';
       }
 
       html += '<script>';
@@ -437,14 +528,18 @@
       return html;
     }
 
-    // ─── Helpers ──────────────────────────────────────────────────────
     function timeAgo(dateStr) {
-      var seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
-      if (seconds < 60) return 'just now';
-      if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
-      if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
-      var d = new Date(dateStr);
-      return d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()] + ' ' + ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2);
+      try {
+        var seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
+        if (seconds < 60) return 'just now';
+        if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+        if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+        var d = new Date(dateStr);
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return d.getDate() + ' ' + months[d.getMonth()] + ' ' + ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2);
+      } catch (e) {
+        return '?';
+      }
     }
 
     function playChime() {
@@ -466,8 +561,12 @@
       } catch (e) {}
     }
 
-    // ─── Start ────────────────────────────────────────────────────────
-    init();
+    try {
+      init();
+    } catch (e) {
+      dbg('Init error: ' + e.message);
+      showError('Init error: ' + e.message);
+    }
   </script>
 </body>
 </html>
